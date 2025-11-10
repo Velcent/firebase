@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    
+    <application>
+        <meta-data
+            android:name="org.godotengine.plugin.v2.GodotxFirebaseMessaging"
+            android:value="com.godotx.firebase.messaging.FirebaseMessagingPlugin" />
+
+        <service
+            android:name=".GodotxFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+    </application>
+
+</manifest>
