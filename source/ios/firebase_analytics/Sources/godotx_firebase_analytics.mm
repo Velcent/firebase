@@ -8,22 +8,24 @@
 GodotxFirebaseAnalytics* GodotxFirebaseAnalytics::instance = nullptr;
 
 void GodotxFirebaseAnalytics::_bind_methods() {
+    ClassDB::bind_method(D_METHOD("initialize"), &GodotxFirebaseAnalytics::initialize);
     ClassDB::bind_method(D_METHOD("log_event", "event_name", "params"), &GodotxFirebaseAnalytics::log_event);
-    
-    ADD_SIGNAL(MethodInfo("event_logged", PropertyInfo(Variant::STRING, "event_name")));
-    ADD_SIGNAL(MethodInfo("error", PropertyInfo(Variant::STRING, "message")));
+
+    ADD_SIGNAL(MethodInfo("analytics_initialized", PropertyInfo(Variant::BOOL, "success")));
+    ADD_SIGNAL(MethodInfo("analytics_event_logged", PropertyInfo(Variant::STRING, "event_name")));
+    ADD_SIGNAL(MethodInfo("analytics_error", PropertyInfo(Variant::STRING, "message")));
 }
 
 static NSDictionary* dictionary_to_nsdict(const Dictionary& dict) {
     NSMutableDictionary* nsDict = [NSMutableDictionary dictionary];
     Array keys = dict.keys();
-    
+
     for (int i = 0; i < keys.size(); i++) {
         String key = keys[i];
         Variant value = dict[key];
-        
+
         NSString* nsKey = [NSString stringWithUTF8String:key.utf8().get_data()];
-        
+
         if (value.get_type() == Variant::STRING) {
             nsDict[nsKey] = [NSString stringWithUTF8String:String(value).utf8().get_data()];
         } else if (value.get_type() == Variant::INT) {
@@ -34,28 +36,32 @@ static NSDictionary* dictionary_to_nsdict(const Dictionary& dict) {
             nsDict[nsKey] = @((bool)value);
         }
     }
-    
+
     return nsDict;
 }
 
-GodotxFirebaseAnalytics* GodotxFirebaseAnalytics::get_singleton() { 
-    return instance; 
+GodotxFirebaseAnalytics* GodotxFirebaseAnalytics::get_singleton() {
+    return instance;
+}
+
+void GodotxFirebaseAnalytics::initialize() {
+    emit_signal("analytics_initialized", true);
 }
 
 void GodotxFirebaseAnalytics::log_event(String event_name, Dictionary params) {
     NSLog(@"[GodotxFirebaseAnalytics] log_event: %s", event_name.utf8().get_data());
-    
+
     @try {
         NSString* nsEventName = [NSString stringWithUTF8String:event_name.utf8().get_data()];
         NSDictionary* nsParams = dictionary_to_nsdict(params);
-        
+
         [FIRAnalytics logEventWithName:nsEventName parameters:nsParams];
-        
-        emit_signal("event_logged", event_name);
+
+        emit_signal("analytics_event_logged", event_name);
     }
     @catch (NSException *exception) {
         NSLog(@"[GodotxFirebaseAnalytics] Failed to log event: %@", exception.reason);
-        emit_signal("error", String([exception.reason UTF8String]));
+        emit_signal("analytics_error", String([exception.reason UTF8String]));
     }
 }
 

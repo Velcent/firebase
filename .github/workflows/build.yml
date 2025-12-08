@@ -37,11 +37,11 @@ jobs:
       - name: Build Godot headers
         run: make build-godot-headers
 
-      - name: Setup Firebase
-        run: make setup-firebase
+      - name: Setup SDK
+        run: make setup-sdk
 
-      - name: Unsign Firebase
-        run: make unsign-firebase
+      - name: Unsign SDK
+        run: make unsign-sdk
 
       - name: Build Android
         run: make build-android

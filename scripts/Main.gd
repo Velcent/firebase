@@ -18,37 +18,39 @@ func initialize_firebase_plugins() -> void:
 	# Firebase Core
 	if Engine.has_singleton("GodotxFirebaseCore"):
 		core = Engine.get_singleton("GodotxFirebaseCore")
-		core.initialized.connect(_on_core_initialized)
-		core.error.connect(_on_error.bind("Core"))
+		core.core_initialized.connect(_on_core_initialized)
+		core.core_error.connect(_on_error.bind("Core"))
 		log_message("✓ Firebase Core plugin found")
 	else:
 		log_message("✗ Firebase Core plugin not found")
-	
+
 	# Firebase Analytics
 	if Engine.has_singleton("GodotxFirebaseAnalytics"):
 		analytics = Engine.get_singleton("GodotxFirebaseAnalytics")
-		analytics.event_logged.connect(_on_event_logged)
-		analytics.error.connect(_on_error.bind("Analytics"))
+		analytics.analytics_initialized.connect(_on_analytics_initialized)
+		analytics.analytics_event_logged.connect(_on_event_logged)
+		analytics.analytics_error.connect(_on_error.bind("Analytics"))
 		log_message("✓ Firebase Analytics plugin found")
 	else:
 		log_message("✗ Firebase Analytics plugin not found")
-	
+
 	# Firebase Crashlytics
 	if Engine.has_singleton("GodotxFirebaseCrashlytics"):
 		crashlytics = Engine.get_singleton("GodotxFirebaseCrashlytics")
-		crashlytics.error.connect(_on_error.bind("Crashlytics"))
+		crashlytics.crashlytics_initialized.connect(_on_crashlytics_initialized)
+		crashlytics.crashlytics_error.connect(_on_error.bind("Crashlytics"))
 		log_message("✓ Firebase Crashlytics plugin found")
 	else:
 		log_message("✗ Firebase Crashlytics plugin not found")
-	
+
 	# Firebase Messaging
 	if Engine.has_singleton("GodotxFirebaseMessaging"):
 		messaging = Engine.get_singleton("GodotxFirebaseMessaging")
-		messaging.permission_granted.connect(_on_permission_granted)
-		messaging.token_received.connect(_on_token_received)
-		messaging.apn_token_received.connect(_on_apn_token_received)
-		messaging.message_received.connect(_on_message_received)
-		messaging.error.connect(_on_error.bind("Messaging"))
+		messaging.messaging_permission_granted.connect(_on_permission_granted)
+		messaging.messaging_token_received.connect(_on_token_received)
+		messaging.messaging_apn_token_received.connect(_on_apn_token_received)
+		messaging.messaging_message_received.connect(_on_message_received)
+		messaging.messaging_error.connect(_on_error.bind("Messaging"))
 		log_message("✓ Firebase Messaging plugin found")
 	else:
 		log_message("✗ Firebase Messaging plugin not found")
@@ -76,10 +78,30 @@ func _on_initialize_pressed() -> void:
 func _on_core_initialized(success: bool) -> void:
 	if success:
 		log_message("[Core] ✓ Firebase initialized successfully!")
-		update_status("Firebase Ready", Color.GREEN)
+
+		# Initialize dependent modules
+		if crashlytics:
+			log_message("[Crashlytics] Initializing...")
+			crashlytics.initialize()
+		if analytics:
+			log_message("[Analytics] Initializing...")
+			analytics.initialize()
 	else:
 		log_message("[Core] ✗ Firebase initialization failed")
 		update_status("Initialization Failed", Color.RED)
+
+func _on_crashlytics_initialized(success: bool) -> void:
+	if success:
+		log_message("[Crashlytics] ✓ Initialized")
+	else:
+		log_message("[Crashlytics] ✗ Initialization failed")
+
+func _on_analytics_initialized(success: bool) -> void:
+	if success:
+		log_message("[Analytics] ✓ Initialized")
+		update_status("Firebase Ready", Color.GREEN)
+	else:
+		log_message("[Analytics] ✗ Initialization failed")
 
 # ============== ANALYTICS ==============
 func _on_log_event_pressed() -> void:
@@ -155,7 +177,7 @@ func _on_get_token_pressed() -> void:
 		log_message("\n[Messaging] Requesting FCM token...")
 		update_status("Getting Token...", Color.YELLOW)
 		messaging.get_token()
-		
+
 		# Also request APNs token (iOS only)
 		if OS.get_name() == "iOS":
 			messaging.get_apns_token()

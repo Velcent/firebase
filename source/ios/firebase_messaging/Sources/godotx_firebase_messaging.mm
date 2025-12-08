@@ -22,7 +22,7 @@
 
     dispatch_async(dispatch_get_main_queue(), ^{
         if (GodotxFirebaseMessaging::instance) {
-            GodotxFirebaseMessaging::instance->emit_signal("token_received", String([fcmToken UTF8String]));
+            GodotxFirebaseMessaging::instance->emit_signal("messaging_token_received", String([fcmToken UTF8String]));
         }
     });
 }
@@ -39,11 +39,11 @@ void GodotxFirebaseMessaging::_bind_methods() {
     ClassDB::bind_method(D_METHOD("subscribe_to_topic", "topic"), &GodotxFirebaseMessaging::subscribe_to_topic);
     ClassDB::bind_method(D_METHOD("unsubscribe_from_topic", "topic"), &GodotxFirebaseMessaging::unsubscribe_from_topic);
 
-    ADD_SIGNAL(MethodInfo("permission_granted"));
-    ADD_SIGNAL(MethodInfo("token_received", PropertyInfo(Variant::STRING, "token")));
-    ADD_SIGNAL(MethodInfo("apn_token_received", PropertyInfo(Variant::STRING, "token")));
-    ADD_SIGNAL(MethodInfo("message_received", PropertyInfo(Variant::STRING, "title"), PropertyInfo(Variant::STRING, "body")));
-    ADD_SIGNAL(MethodInfo("error", PropertyInfo(Variant::STRING, "message")));
+    ADD_SIGNAL(MethodInfo("messaging_permission_granted"));
+    ADD_SIGNAL(MethodInfo("messaging_token_received", PropertyInfo(Variant::STRING, "token")));
+    ADD_SIGNAL(MethodInfo("messaging_apn_token_received", PropertyInfo(Variant::STRING, "token")));
+    ADD_SIGNAL(MethodInfo("messaging_message_received", PropertyInfo(Variant::STRING, "title"), PropertyInfo(Variant::STRING, "body")));
+    ADD_SIGNAL(MethodInfo("messaging_error", PropertyInfo(Variant::STRING, "message")));
 }
 
 GodotxFirebaseMessaging *GodotxFirebaseMessaging::get_singleton() {
@@ -81,7 +81,7 @@ void GodotxFirebaseMessaging::request_permission() {
             NSLog(@"[GodotxFirebaseMessaging] Notification permission is denied");
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (GodotxFirebaseMessaging::instance) {
-                    GodotxFirebaseMessaging::instance->emit_signal("error", String("Notification permission denied. Please enable notifications in iOS settings."));
+                    GodotxFirebaseMessaging::instance->emit_signal("messaging_error", String("Notification permission denied. Please enable notifications in iOS settings."));
                 }
             });
             return;
@@ -95,9 +95,9 @@ void GodotxFirebaseMessaging::request_permission() {
             dispatch_async(dispatch_get_main_queue(), ^{
                 NSLog(@"[GodotxFirebaseMessaging] Calling registerForRemoteNotifications...");
                 [[UIApplication sharedApplication] registerForRemoteNotifications];
-                
+
                 if (GodotxFirebaseMessaging::instance) {
-                    GodotxFirebaseMessaging::instance->emit_signal("permission_granted");
+                    GodotxFirebaseMessaging::instance->emit_signal("messaging_permission_granted");
                 }
             });
             return;
@@ -113,7 +113,7 @@ void GodotxFirebaseMessaging::request_permission() {
                 NSLog(@"[GodotxFirebaseMessaging] Permission request error: %@", error.localizedDescription);
                 dispatch_async(dispatch_get_main_queue(), ^{
                     if (GodotxFirebaseMessaging::instance) {
-                        GodotxFirebaseMessaging::instance->emit_signal("error", String([error.localizedDescription UTF8String]));
+                        GodotxFirebaseMessaging::instance->emit_signal("messaging_error", String([error.localizedDescription UTF8String]));
                     }
                 });
                 return;
@@ -125,15 +125,15 @@ void GodotxFirebaseMessaging::request_permission() {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     NSLog(@"[GodotxFirebaseMessaging] Calling registerForRemoteNotifications...");
                     [[UIApplication sharedApplication] registerForRemoteNotifications];
-                    
+
                     if (GodotxFirebaseMessaging::instance) {
-                        GodotxFirebaseMessaging::instance->emit_signal("permission_granted");
+                        GodotxFirebaseMessaging::instance->emit_signal("messaging_permission_granted");
                     }
                 });
             } else {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     if (GodotxFirebaseMessaging::instance) {
-                        GodotxFirebaseMessaging::instance->emit_signal("error", String("Notification permission not granted by the user."));
+                        GodotxFirebaseMessaging::instance->emit_signal("messaging_error", String("Notification permission not granted by the user."));
                     }
                 });
             }
@@ -151,7 +151,7 @@ void GodotxFirebaseMessaging::get_token() {
             NSLog(@"[GodotxFirebaseMessaging] Notification permission denied");
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (GodotxFirebaseMessaging::instance) {
-                    GodotxFirebaseMessaging::instance->emit_signal("error", String("Notification permission denied. Please enable notifications in iOS settings."));
+                    GodotxFirebaseMessaging::instance->emit_signal("messaging_error", String("Notification permission denied. Please enable notifications in iOS settings."));
                 }
             });
             return;
@@ -171,7 +171,7 @@ void GodotxFirebaseMessaging::attempt_get_fcm_token() {
             NSLog(@"[GodotxFirebaseMessaging] Error fetching token: %@", error.localizedDescription);
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (GodotxFirebaseMessaging::instance) {
-                    GodotxFirebaseMessaging::instance->emit_signal("error", String([error.localizedDescription UTF8String]));
+                    GodotxFirebaseMessaging::instance->emit_signal("messaging_error", String([error.localizedDescription UTF8String]));
                 }
             });
             return;
@@ -181,7 +181,7 @@ void GodotxFirebaseMessaging::attempt_get_fcm_token() {
             NSLog(@"[GodotxFirebaseMessaging] FCM token is empty");
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (GodotxFirebaseMessaging::instance) {
-                    GodotxFirebaseMessaging::instance->emit_signal("error", String("FCM token is empty or nil."));
+                    GodotxFirebaseMessaging::instance->emit_signal("messaging_error", String("FCM token is empty or nil."));
                 }
             });
             return;
@@ -190,7 +190,7 @@ void GodotxFirebaseMessaging::attempt_get_fcm_token() {
         NSLog(@"[GodotxFirebaseMessaging] FCM token: %@", token);
         dispatch_async(dispatch_get_main_queue(), ^{
             if (GodotxFirebaseMessaging::instance) {
-                GodotxFirebaseMessaging::instance->emit_signal("token_received", String([token UTF8String]));
+                GodotxFirebaseMessaging::instance->emit_signal("messaging_token_received", String([token UTF8String]));
             }
         });
     }];
@@ -201,26 +201,26 @@ void GodotxFirebaseMessaging::get_apns_token() {
 
     dispatch_async(dispatch_get_main_queue(), ^{
         NSData *apnsToken = [FIRMessaging messaging].APNSToken;
-        
+
         if (apnsToken) {
             // Convert device token to hex string
             const unsigned char *data = (const unsigned char *)[apnsToken bytes];
             NSMutableString *token = [NSMutableString string];
-            
+
             for (NSUInteger i = 0; i < [apnsToken length]; i++) {
                 [token appendFormat:@"%02.2hhX", data[i]];
             }
-            
+
             NSLog(@"[GodotxFirebaseMessaging] APNs Token: %@", token);
-            
+
             if (GodotxFirebaseMessaging::instance) {
-                GodotxFirebaseMessaging::instance->emit_signal("apn_token_received", String([token UTF8String]));
+                GodotxFirebaseMessaging::instance->emit_signal("messaging_apn_token_received", String([token UTF8String]));
             }
         } else {
             NSLog(@"[GodotxFirebaseMessaging] APNs token not available yet");
-            
+
             if (GodotxFirebaseMessaging::instance) {
-                GodotxFirebaseMessaging::instance->emit_signal("error", String("APNs token not available. Make sure you called request_permission() first."));
+                GodotxFirebaseMessaging::instance->emit_signal("messaging_error", String("APNs token not available. Make sure you called request_permission() first."));
             }
         }
     });
@@ -237,7 +237,7 @@ void GodotxFirebaseMessaging::subscribe_to_topic(String topic) {
             NSLog(@"[GodotxFirebaseMessaging] Error subscribing to topic %@: %@", nsTopic, error.localizedDescription);
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (GodotxFirebaseMessaging::instance) {
-                    GodotxFirebaseMessaging::instance->emit_signal("error", String([error.localizedDescription UTF8String]));
+                    GodotxFirebaseMessaging::instance->emit_signal("messaging_error", String([error.localizedDescription UTF8String]));
                 }
             });
         } else {
@@ -257,7 +257,7 @@ void GodotxFirebaseMessaging::unsubscribe_from_topic(String topic) {
             NSLog(@"[GodotxFirebaseMessaging] Error unsubscribing from topic %@: %@", nsTopic, error.localizedDescription);
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (GodotxFirebaseMessaging::instance) {
-                    GodotxFirebaseMessaging::instance->emit_signal("error", String([error.localizedDescription UTF8String]));
+                    GodotxFirebaseMessaging::instance->emit_signal("messaging_error", String([error.localizedDescription UTF8String]));
                 }
             });
         } else {

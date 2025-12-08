@@ -5,20 +5,21 @@
 
 class GodotxFirebaseCrashlytics : public Object {
     GDCLASS(GodotxFirebaseCrashlytics, Object);
-    
+
 private:
     static GodotxFirebaseCrashlytics* instance;
-    
+
 protected:
     static void _bind_methods();
-    
+
 public:
     static GodotxFirebaseCrashlytics* get_singleton();
-    
+
+    void initialize();
     void crash();
     void log_message(String message);
     void set_user_id(String user_id);
-    
+
     GodotxFirebaseCrashlytics();
     ~GodotxFirebaseCrashlytics();
 };

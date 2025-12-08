@@ -14,7 +14,7 @@ class FirebaseCorePlugin(godot: Godot) : GodotPlugin(godot) {
     }
 
     init {
-        Log.v(TAG, "Loading Firebase Core plugin...")
+        Log.v(TAG, "Firebase Core plugin loaded")
     }
 
     override fun getPluginName(): String {
@@ -23,10 +23,10 @@ class FirebaseCorePlugin(godot: Godot) : GodotPlugin(godot) {
 
     override fun getPluginSignals(): Set<SignalInfo> {
         return setOf(
-            SignalInfo("initialized",
+            SignalInfo("core_initialized",
                 Boolean::class.javaObjectType
             ),
-            SignalInfo("error",
+            SignalInfo("core_error",
                 String::class.java
             )
         )
@@ -42,11 +42,11 @@ class FirebaseCorePlugin(godot: Godot) : GodotPlugin(godot) {
             } else {
                 Log.d(TAG, "Firebase already initialized")
             }
-            emitSignal("initialized", true)
+            emitSignal("core_initialized", true)
         } catch (e: Exception) {
             Log.e(TAG, "Firebase initialization failed", e)
-            emitSignal("initialized", false)
-            emitSignal("error", e.message ?: "unknown_error")
+            emitSignal("core_initialized", false)
+            emitSignal("core_error", e.message ?: "init_error")
         }
     }
 }

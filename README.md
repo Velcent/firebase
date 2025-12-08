@@ -50,6 +50,15 @@ This project provides native Firebase plugins for Godot, built as separate modul
 
 ### 1. Installation
 
+#### Option A: Godot Asset Library (Recommended)
+
+1. Open **AssetLib** in Godot Editor
+2. Search for "Godotx Firebase"
+3. Click **Download** and **Install**
+4. Or download directly from: https://godotengine.org/asset-library/asset/4475
+
+#### Option B: Manual Installation
+
 1. **Copy the plugin** to your Godot project:
    ```
    your_project/
@@ -84,6 +93,20 @@ This project provides native Firebase plugins for Godot, built as separate modul
    - Enable **Firebase Core** (required)
    - Enable other modules you need
 
+### Export Filters (Recommended)
+
+Some project files may be copied to the final APK/AAB/IPA assets folder unnecessarily. To reduce app size and avoid including development files, add these patterns to **Filters to exclude files/folders from project** in your export preset:
+
+```
+ios/*,android/*,addons/godotx_firebase/*,build/*
+```
+
+This excludes:
+- `ios/` - Built iOS plugins (already bundled by the export plugin)
+- `android/` - Built Android plugins (already bundled by the export plugin)
+- `addons/godotx_firebase/` - Export plugin scripts (not needed at runtime)
+- `build/` - Build output directory
+
 ### 3. Test the Integration
 
 Run the included test scene to verify everything works:
@@ -97,38 +120,94 @@ The test scene includes buttons to test all Firebase features.
 
 ### Firebase Core
 
+Firebase Core must be initialized first before using any other Firebase module.
+
 ```gdscript
 extends Node
 
 var firebase_core
+var analytics
+var crashlytics
 
 func _ready():
+    # Get all singletons
     if Engine.has_singleton("GodotxFirebaseCore"):
         firebase_core = Engine.get_singleton("GodotxFirebaseCore")
-        firebase_core.initialized.connect(_on_initialized)
+        firebase_core.core_initialized.connect(_on_core_initialized)
+
+    if Engine.has_singleton("GodotxFirebaseAnalytics"):
+        analytics = Engine.get_singleton("GodotxFirebaseAnalytics")
+        analytics.analytics_initialized.connect(_on_analytics_initialized)
+
+    if Engine.has_singleton("GodotxFirebaseCrashlytics"):
+        crashlytics = Engine.get_singleton("GodotxFirebaseCrashlytics")
+        crashlytics.crashlytics_initialized.connect(_on_crashlytics_initialized)
+
+    # Initialize Core first
+    if firebase_core:
         firebase_core.initialize()
 
-func _on_initialized(success: bool):
-    print("Firebase initialized: ", success)
+func _on_core_initialized(success: bool):
+    if success:
+        print("Firebase Core initialized!")
+
+        # Now initialize dependent modules
+        if crashlytics:
+            crashlytics.initialize()
+        if analytics:
+            analytics.initialize()
+    else:
+        print("Firebase Core initialization failed")
+
+func _on_crashlytics_initialized(success: bool):
+    print("Crashlytics initialized: ", success)
+
+func _on_analytics_initialized(success: bool):
+    print("Analytics initialized: ", success)
 ```
 
 ### Firebase Analytics
 
 ```gdscript
-var analytics = Engine.get_singleton("GodotxFirebaseAnalytics")
+var analytics
 
-# Log event with parameters
-var params = {"level": "5", "score": "1000"}
-analytics.log_event("level_complete", JSON.stringify(params))
+func _ready():
+    if Engine.has_singleton("GodotxFirebaseAnalytics"):
+        analytics = Engine.get_singleton("GodotxFirebaseAnalytics")
+        analytics.analytics_initialized.connect(_on_analytics_initialized)
+
+# Call this after Firebase Core is initialized
+func initialize_analytics():
+    if analytics:
+        analytics.initialize()
+
+func _on_analytics_initialized(success: bool):
+    if success:
+        # Now you can log events
+        var params = {"level": "5", "score": "1000"}
+        analytics.log_event("level_complete", JSON.stringify(params))
 ```
 
 ### Firebase Crashlytics
 
 ```gdscript
-var crashlytics = Engine.get_singleton("GodotxFirebaseCrashlytics")
+var crashlytics
 
-crashlytics.set_user_id("user_123")
-crashlytics.log_message("Player entered level 5")
+func _ready():
+    if Engine.has_singleton("GodotxFirebaseCrashlytics"):
+        crashlytics = Engine.get_singleton("GodotxFirebaseCrashlytics")
+        crashlytics.crashlytics_initialized.connect(_on_crashlytics_initialized)
+
+# Call this after Firebase Core is initialized
+func initialize_crashlytics():
+    if crashlytics:
+        crashlytics.initialize()
+
+func _on_crashlytics_initialized(success: bool):
+    if success:
+        # Now you can use Crashlytics
+        crashlytics.set_user_id("user_123")
+        crashlytics.log_message("Player entered level 5")
 ```
 
 ### Firebase Messaging
@@ -136,12 +215,15 @@ crashlytics.log_message("Player entered level 5")
 ```gdscript
 var messaging = Engine.get_singleton("GodotxFirebaseMessaging")
 
+# Connect to signals
+messaging.messaging_permission_granted.connect(_on_permission_granted)
+messaging.messaging_token_received.connect(_on_token_received)
+messaging.messaging_apn_token_received.connect(_on_apn_token_received)  # iOS only
+messaging.messaging_message_received.connect(_on_message_received)
+messaging.messaging_error.connect(_on_error)
+
 # Request notification permission (this also registers for APNs on iOS)
 messaging.request_permission()
-
-# Connect to signals
-messaging.token_received.connect(_on_token_received)
-messaging.apn_token_received.connect(_on_apn_token_received)  # iOS only
 
 # Get FCM token
 messaging.get_token()
@@ -150,12 +232,21 @@ messaging.get_token()
 if OS.get_name() == "iOS":
     messaging.get_apns_token()
 
+func _on_permission_granted():
+    print("Permission granted!")
+
 func _on_token_received(token: String):
     print("FCM Token: ", token)
 
 func _on_apn_token_received(token: String):
     # iOS only - Apple Push Notification device token
     print("APN Token: ", token)
+
+func _on_message_received(title: String, body: String):
+    print("Message: ", title, " - ", body)
+
+func _on_error(message: String):
+    print("Error: ", message)
 ```
 
 **Available Methods:**
@@ -166,11 +257,11 @@ func _on_apn_token_received(token: String):
 - `unsubscribe_from_topic(topic: String)` - Unsubscribe from a topic
 
 **Available Signals:**
-- `permission_granted()` - Notification permission granted
-- `token_received(token: String)` - FCM registration token received
-- `apn_token_received(token: String)` - iOS APN device token received (iOS only)
-- `message_received(title: String, body: String)` - Push notification received
-- `error(message: String)` - Error occurred
+- `messaging_permission_granted()` - Notification permission granted
+- `messaging_token_received(token: String)` - FCM registration token received
+- `messaging_apn_token_received(token: String)` - iOS APN device token received (iOS only)
+- `messaging_message_received(title: String, body: String)` - Push notification received
+- `messaging_error(message: String)` - Error occurred
 
 **Note:** On iOS, Firebase Messaging uses method swizzling to automatically handle APNs registration. The APNs token is captured by Firebase internally and can be accessed via the `get_apns_token()` method after calling `request_permission()`.
 
@@ -181,16 +272,22 @@ func _on_apn_token_received(token: String):
 The plugin automatically handles Firebase dependencies, but if you need to customize your Android build:
 
 1. Edit `android/build/build.gradle`:
+
+> **Important:** The `buildscript` block **must be at the very beginning** of the `build.gradle` file, before any other blocks like `plugins` or `android`.
+
 ```gradle
+// This MUST be at the beginning of the file
 buildscript {
     dependencies {
         // Add if not present
         classpath 'com.google.gms:google-services:4.4.2'
-        
+
         // Add this if using Crashlytics (required for crash reports)
         classpath 'com.google.firebase:firebase-crashlytics-gradle:3.0.6'
     }
 }
+
+// ... rest of the file (plugins, android, dependencies blocks) ...
 
 // At the end of the file
 apply plugin: 'com.google.gms.google-services'
@@ -229,22 +326,26 @@ All Firebase frameworks are automatically bundled by the export plugin. The plug
 
 ```bash
 # Initial setup (run once)
-make setup-godot        # Clone Godot source code
-make setup-firebase     # Download Firebase iOS SDK (v12.5.0)
-make unsign-firebase    # Remove code signatures (prevents build errors)
-make setup-apple        # Generate Xcode projects + install CocoaPods
+make setup-godot         # Clone Godot source code
+make build-godot-headers # Generate Godot headers
+make setup-sdk           # Download Firebase iOS SDK
+make unsign-sdk          # Remove code signatures (prevents build errors)
+make setup-apple         # Generate Xcode projects + install CocoaPods
 
 # Build everything
-make build-all          # Build iOS + Android (both Debug & Release)
+make build-all           # Build iOS + Android (both Debug & Release)
 
 # Or build platforms separately
-make build-apple        # Build iOS .xcframework files
-make build-android      # Build Android .aar files
+make build-apple         # Build iOS .xcframework files
+make build-android       # Build Android .aar files
+
+# Package for distribution
+make package             # Create ZIP file
 
 # Maintenance commands
-make clean              # Clean all build artifacts
-make clean-firebase     # Remove Firebase SDK (re-run setup-firebase after)
-make clean-godot        # Remove Godot source (re-run setup-godot after)
+make clean               # Clean all build artifacts
+make clean-sdk           # Remove Firebase SDK (re-run setup-sdk after)
+make clean-godot         # Remove Godot source (re-run setup-godot after)
 
 # Show all available commands
 make help
@@ -348,11 +449,11 @@ firebase/
 1. **Source Code** (`source/`): Platform-specific implementations
    - **iOS**: Objective-C++ wrappers around Firebase C++ SDK
    - **Android**: Kotlin wrappers using Firebase Android SDK
-   
-2. **Build Process**: 
+
+2. **Build Process**:
    - **iOS**: XcodeGen generates Xcode projects → builds static libraries → creates XCFrameworks
    - **Android**: Gradle builds AAR files with embedded Firebase dependencies
-   
+
 3. **Plugin Integration** (`addons/godotx_firebase/`):
    - `export_plugin.gd` detects enabled modules in export presets
    - Automatically bundles `.xcframework` (iOS) or `.aar` (Android) files
@@ -453,30 +554,30 @@ plugin.method_name(parameters)
 
 ## FAQ
 
-**Q: Do I need to build the plugins myself?**  
+**Q: Do I need to build the plugins myself?**
 A: No, if you just want to use the plugins. The pre-built `.xcframework` and `.aar` files are included in the repository. Building is only needed if you want to modify the source code or add new features.
 
-**Q: Can I use only some Firebase modules?**  
+**Q: Can I use only some Firebase modules?**
 A: Yes! Each module can be enabled/disabled independently in the export preset. However, **Firebase Core is always required** as it provides the base functionality.
 
-**Q: Will this increase my app size?**  
+**Q: Will this increase my app size?**
 A: Yes, Firebase adds approximately:
 - **iOS**: 15-20 MB per module (compressed)
 - **Android**: 5-10 MB per module (compressed)
 
 Only enabled modules are included in the final build.
 
-**Q: Does this work with Godot 4.4 or earlier?**  
+**Q: Does this work with Godot 4.4 or earlier?**
 A: This project is built for Godot 4.5 or later.
 
-**Q: How do I get Firebase config files?**  
-A: 
+**Q: How do I get Firebase config files?**
+A:
 1. Go to [Firebase Console](https://console.firebase.google.com/)
 2. Create a project (or select existing)
 3. Add iOS/Android app
 4. Download `GoogleService-Info.plist` (iOS) or `google-services.json` (Android)
 
-**Q: Why do I need to unsign Firebase frameworks?**  
+**Q: Why do I need to unsign Firebase frameworks?**
 A: Firebase's pre-signed frameworks can cause code signing conflicts during Xcode builds. Running `make unsign-firebase` removes these signatures, allowing Xcode to sign everything together.
 
 ## Contributing
@@ -485,7 +586,7 @@ Contributions are welcome! Here's how you can help:
 
 1. **Report bugs**: Open an issue with reproduction steps
 2. **Request features**: Suggest new Firebase modules or improvements
-3. **Submit PRs**: 
+3. **Submit PRs**:
    - Follow existing code style
    - Test on both iOS and Android
    - Update documentation as needed

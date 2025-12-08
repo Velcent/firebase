@@ -1,4 +1,4 @@
-.PHONY: help clean clean-firebase clean-godot setup-godot build-godot-headers setup-firebase setup-apple build-apple build-android build-all package
+.PHONY: help clean clean-sdk clean-godot setup-godot build-godot-headers setup-sdk unsign-sdk setup-apple build-apple build-android build-all package
 
 # ============================================================================
 # Directory Configuration (based on ROOT_DIR)
@@ -43,6 +43,10 @@ GODOT_VERSION = 4.5-stable
 GODOT_REPO = https://github.com/godotengine/godot.git
 FIREBASE_VERSION = 12.5.0
 
+# ============================================================================
+# Help
+# ============================================================================
+
 help:
 	@echo "Godotx Firebase Build System"
 	@echo "============================="
@@ -50,16 +54,15 @@ help:
 	@echo "Available targets:"
 	@echo "  setup-godot         - Clone Godot source (required for compilation)"
 	@echo "  build-godot-headers - Generate Godot headers (required for iOS plugin compilation)"
-	@echo "  setup-firebase      - Download Firebase SDK"
-	@echo "  resign-firebase     - Re-sign Firebase SDK frameworks (fixes signature errors)"
-	@echo "  unsign-firebase     - Remove signatures from Firebase SDK frameworks"
+	@echo "  setup-sdk           - Download Firebase SDK"
+	@echo "  unsign-sdk          - Remove signatures from Firebase SDK frameworks"
 	@echo "  setup-apple         - Install Apple dependencies (CocoaPods + XcodeGen)"
 	@echo "  build-apple         - Build all Apple modules (iOS)"
 	@echo "  build-android       - Build all Android modules"
-	@echo "  build-all           -  Build everything (Apple + Android)"
-	@echo "  package             -  Create distribution package (godotx_firebase.zip)"
-	@echo "  clean               -   Clean build artifacts"
-	@echo "  clean-firebase      -  Remove Firebase SDK"
+	@echo "  build-all           - Build everything (Apple + Android)"
+	@echo "  package             - Create distribution package (godotx_firebase.zip)"
+	@echo "  clean               - Clean build artifacts"
+	@echo "  clean-sdk           - Remove Firebase SDK"
 	@echo "  clean-godot         - Remove Godot source"
 
 # ============================================================================
@@ -103,7 +106,7 @@ build-godot-headers: setup-godot
 	@echo "✓ Godot headers generated!"
 	@echo "====================================================================="
 
-setup-firebase:
+setup-sdk:
 	@echo "====================================================================="
 	@echo "Setting up Firebase SDK..."
 	@echo "====================================================================="
@@ -128,22 +131,7 @@ setup-firebase:
 	@echo "✓ Firebase SDK ready!"
 	@echo "====================================================================="
 
-resign-firebase:
-	@echo "====================================================================="
-	@echo "Re-signing Firebase SDK frameworks..."
-	@echo "====================================================================="
-	@echo ""
-	@find $(FIREBASE_SDK_DIR) -name "*.xcframework" -type d | while read framework; do \
-		echo "→ Re-signing: $$(basename $$framework)"; \
-		codesign --force --deep --sign - "$$framework" 2>&1 | grep -v "replacing existing signature" || true; \
-		echo "  ✓ Signed"; \
-	done
-	@echo ""
-	@echo "====================================================================="
-	@echo "✓ All frameworks re-signed successfully!"
-	@echo "====================================================================="
-
-unsign-firebase:
+unsign-sdk:
 	@echo "====================================================================="
 	@echo "Removing signatures from Firebase SDK frameworks..."
 	@echo "====================================================================="
@@ -368,7 +356,7 @@ clean:
 	@echo "✓ Clean complete!"
 	@echo "====================================================================="
 
-clean-firebase:
+clean-sdk:
 	@echo "====================================================================="
 	@echo "Removing Firebase SDK..."
 	@echo "====================================================================="
