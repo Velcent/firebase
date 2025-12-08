@@ -40,7 +40,7 @@ This project provides native Firebase plugins for Godot, built as separate modul
 | Component | Version |
 |-----------|---------|
 | Godot | 4.5-stable |
-| Firebase iOS SDK | 12.5.0 |
+| Firebase iOS SDK | 12.6.0 |
 | Firebase Android SDK | 33.5.1 |
 | Kotlin | 2.1.0 |
 | Min iOS | 13.0 |
