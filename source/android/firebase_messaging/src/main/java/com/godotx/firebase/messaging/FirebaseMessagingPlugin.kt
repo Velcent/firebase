@@ -20,7 +20,7 @@ class FirebaseMessagingPlugin(godot: Godot) : GodotPlugin(godot) {
     }
 
     init {
-        Log.v(TAG, "Loading Firebase Messaging plugin...")
+        Log.v(TAG, "Firebase Messaging plugin loaded")
     }
 
     override fun getPluginName(): String {
@@ -29,17 +29,34 @@ class FirebaseMessagingPlugin(godot: Godot) : GodotPlugin(godot) {
 
     override fun getPluginSignals(): Set<SignalInfo> {
         return setOf(
-            SignalInfo("token_received",
+            SignalInfo("messaging_permission_granted"),
+            SignalInfo("messaging_token_received",
                 String::class.java
             ),
-            SignalInfo("message_received",
+            SignalInfo("messaging_message_received",
                 String::class.java,
                 String::class.java
             ),
-            SignalInfo("error",
+            SignalInfo("messaging_error",
                 String::class.java
             )
         )
+    }
+
+    override fun onMainRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>?,
+        grantResults: IntArray?
+    ) {
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            if (grantResults != null && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.d(TAG, "Notification permission granted")
+                emitSignal("messaging_permission_granted")
+            } else {
+                Log.e(TAG, "Notification permission denied")
+                emitSignal("messaging_error", "notification_permission_denied")
+            }
+        }
     }
 
     @UsedByGodot
@@ -47,7 +64,7 @@ class FirebaseMessagingPlugin(godot: Godot) : GodotPlugin(godot) {
         val ctx = activity
         if (ctx == null) {
             Log.e(TAG, "Activity is null")
-            emitSignal("error", "activity_null")
+            emitSignal("messaging_error", "activity_null")
             return
         }
 
@@ -59,7 +76,15 @@ class FirebaseMessagingPlugin(godot: Godot) : GodotPlugin(godot) {
                     arrayOf(Manifest.permission.POST_NOTIFICATIONS),
                     PERMISSION_REQUEST_CODE
                 )
+            } else {
+                // Permission already granted
+                Log.d(TAG, "Notification permission already granted")
+                emitSignal("messaging_permission_granted")
             }
+        } else {
+            // For Android < 13, permission not required
+            Log.d(TAG, "Notification permission not required (Android < 13)")
+            emitSignal("messaging_permission_granted")
         }
     }
 
@@ -69,17 +94,17 @@ class FirebaseMessagingPlugin(godot: Godot) : GodotPlugin(godot) {
             FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
                 if (!task.isSuccessful) {
                     Log.e(TAG, "Failed to get FCM token", task.exception)
-                    emitSignal("error", task.exception?.message ?: "token_fetch_failed")
+                    emitSignal("messaging_error", task.exception?.message ?: "token_fetch_failed")
                     return@addOnCompleteListener
                 }
 
                 val token = task.result
                 Log.d(TAG, "FCM token: $token")
-                emitSignal("token_received", token)
+                emitSignal("messaging_token_received", token)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error getting token", e)
-            emitSignal("error", e.message ?: "token_error")
+            emitSignal("messaging_error", e.message ?: "token_error")
         }
     }
 
@@ -92,12 +117,12 @@ class FirebaseMessagingPlugin(godot: Godot) : GodotPlugin(godot) {
                         Log.d(TAG, "Subscribed to topic: $topic")
                     } else {
                         Log.e(TAG, "Failed to subscribe to topic", task.exception)
-                        emitSignal("error", task.exception?.message ?: "subscribe_failed")
+                        emitSignal("messaging_error", task.exception?.message ?: "subscribe_failed")
                     }
                 }
         } catch (e: Exception) {
             Log.e(TAG, "Error subscribing to topic", e)
-            emitSignal("error", e.message ?: "subscribe_error")
+            emitSignal("messaging_error", e.message ?: "subscribe_error")
         }
     }
 
@@ -110,12 +135,12 @@ class FirebaseMessagingPlugin(godot: Godot) : GodotPlugin(godot) {
                         Log.d(TAG, "Unsubscribed from topic: $topic")
                     } else {
                         Log.e(TAG, "Failed to unsubscribe from topic", task.exception)
-                        emitSignal("error", task.exception?.message ?: "unsubscribe_failed")
+                        emitSignal("messaging_error", task.exception?.message ?: "unsubscribe_failed")
                     }
                 }
         } catch (e: Exception) {
             Log.e(TAG, "Error unsubscribing from topic", e)
-            emitSignal("error", e.message ?: "unsubscribe_error")
+            emitSignal("messaging_error", e.message ?: "unsubscribe_error")
         }
     }
 }

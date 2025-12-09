@@ -16,13 +16,7 @@ class FirebaseCrashlyticsPlugin(godot: Godot) : GodotPlugin(godot) {
     }
 
     init {
-        Log.v(TAG, "Loading Firebase Crashlytics plugin...")
-        try {
-            crashlytics = FirebaseCrashlytics.getInstance()
-            Log.v(TAG, "Firebase Crashlytics initialized")
-        } catch (e: Exception) {
-            Log.e(TAG, "Firebase Crashlytics init failed", e)
-        }
+        Log.v(TAG, "Firebase Crashlytics plugin loaded")
     }
 
     override fun getPluginName(): String {
@@ -31,10 +25,26 @@ class FirebaseCrashlyticsPlugin(godot: Godot) : GodotPlugin(godot) {
 
     override fun getPluginSignals(): Set<SignalInfo> {
         return setOf(
-            SignalInfo("error",
+            SignalInfo("crashlytics_initialized",
+                Boolean::class.javaObjectType
+            ),
+            SignalInfo("crashlytics_error",
                 String::class.java
             )
         )
+    }
+
+    @UsedByGodot
+    fun initialize() {
+        try {
+            crashlytics = FirebaseCrashlytics.getInstance()
+            Log.d(TAG, "Firebase Crashlytics initialized")
+            emitSignal("crashlytics_initialized", true)
+        } catch (e: Exception) {
+            Log.e(TAG, "Firebase Crashlytics init failed", e)
+            emitSignal("crashlytics_initialized", false)
+            emitSignal("crashlytics_error", e.message ?: "init_error")
+        }
     }
 
     @UsedByGodot
@@ -49,7 +59,7 @@ class FirebaseCrashlyticsPlugin(godot: Godot) : GodotPlugin(godot) {
         val crashlyticsInstance = crashlytics
         if (crashlyticsInstance == null) {
             Log.e(TAG, "Firebase Crashlytics not initialized")
-            emitSignal("error", "crashlytics_not_initialized")
+            emitSignal("crashlytics_error", "crashlytics_not_initialized")
             return
         }
 
@@ -58,7 +68,7 @@ class FirebaseCrashlyticsPlugin(godot: Godot) : GodotPlugin(godot) {
             Log.d(TAG, "Logged message to Crashlytics: $message")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to log message", e)
-            emitSignal("error", e.message ?: "log_error")
+            emitSignal("crashlytics_error", e.message ?: "log_error")
         }
     }
 
@@ -67,7 +77,7 @@ class FirebaseCrashlyticsPlugin(godot: Godot) : GodotPlugin(godot) {
         val crashlyticsInstance = crashlytics
         if (crashlyticsInstance == null) {
             Log.e(TAG, "Firebase Crashlytics not initialized")
-            emitSignal("error", "crashlytics_not_initialized")
+            emitSignal("crashlytics_error", "crashlytics_not_initialized")
             return
         }
 
@@ -76,7 +86,7 @@ class FirebaseCrashlyticsPlugin(godot: Godot) : GodotPlugin(godot) {
             Log.d(TAG, "Set user ID: $user_id")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to set user ID", e)
-            emitSignal("error", e.message ?: "set_user_error")
+            emitSignal("crashlytics_error", e.message ?: "set_user_error")
         }
     }
 }

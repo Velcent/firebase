@@ -8,15 +8,21 @@
 GodotxFirebaseCrashlytics* GodotxFirebaseCrashlytics::instance = nullptr;
 
 void GodotxFirebaseCrashlytics::_bind_methods() {
+    ClassDB::bind_method(D_METHOD("initialize"), &GodotxFirebaseCrashlytics::initialize);
     ClassDB::bind_method(D_METHOD("crash"), &GodotxFirebaseCrashlytics::crash);
     ClassDB::bind_method(D_METHOD("log_message", "message"), &GodotxFirebaseCrashlytics::log_message);
     ClassDB::bind_method(D_METHOD("set_user_id", "user_id"), &GodotxFirebaseCrashlytics::set_user_id);
-    
-    ADD_SIGNAL(MethodInfo("error", PropertyInfo(Variant::STRING, "message")));
+
+    ADD_SIGNAL(MethodInfo("crashlytics_initialized", PropertyInfo(Variant::BOOL, "success")));
+    ADD_SIGNAL(MethodInfo("crashlytics_error", PropertyInfo(Variant::STRING, "message")));
 }
 
-GodotxFirebaseCrashlytics* GodotxFirebaseCrashlytics::get_singleton() { 
-    return instance; 
+GodotxFirebaseCrashlytics* GodotxFirebaseCrashlytics::get_singleton() {
+    return instance;
+}
+
+void GodotxFirebaseCrashlytics::initialize() {
+    emit_signal("crashlytics_initialized", true);
 }
 
 void GodotxFirebaseCrashlytics::crash() {
@@ -32,7 +38,7 @@ void GodotxFirebaseCrashlytics::log_message(String message) {
     }
     @catch (NSException *exception) {
         NSLog(@"[GodotxFirebaseCrashlytics] Failed to log message: %@", exception.reason);
-        emit_signal("error", String([exception.reason UTF8String]));
+        emit_signal("crashlytics_error", String([exception.reason UTF8String]));
     }
 }
 
@@ -44,7 +50,7 @@ void GodotxFirebaseCrashlytics::set_user_id(String user_id) {
     }
     @catch (NSException *exception) {
         NSLog(@"[GodotxFirebaseCrashlytics] Failed to set user ID: %@", exception.reason);
-        emit_signal("error", String([exception.reason UTF8String]));
+        emit_signal("crashlytics_error", String([exception.reason UTF8String]));
     }
 }
 

@@ -6,7 +6,7 @@ godot-cpp/
 build/
 
 # Apple build artifacts
-/source/ios/firebase_sdk/
+/source/ios/*_sdk/
 /ios/
 
 # Android build artifacts
