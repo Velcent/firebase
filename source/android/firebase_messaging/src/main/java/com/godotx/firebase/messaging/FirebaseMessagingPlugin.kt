@@ -30,6 +30,7 @@ class FirebaseMessagingPlugin(godot: Godot) : GodotPlugin(godot) {
     override fun getPluginSignals(): Set<SignalInfo> {
         return setOf(
             SignalInfo("messaging_permission_granted"),
+            SignalInfo("messaging_permission_denied"),
             SignalInfo("messaging_token_received",
                 String::class.java
             ),
@@ -53,8 +54,8 @@ class FirebaseMessagingPlugin(godot: Godot) : GodotPlugin(godot) {
                 Log.d(TAG, "Notification permission granted")
                 emitSignal("messaging_permission_granted")
             } else {
-                Log.e(TAG, "Notification permission denied")
-                emitSignal("messaging_error", "notification_permission_denied")
+                Log.d(TAG, "Notification permission denied")
+                emitSignal("messaging_permission_denied")
             }
         }
     }

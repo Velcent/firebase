@@ -47,6 +47,7 @@ func initialize_firebase_plugins() -> void:
 	if Engine.has_singleton("GodotxFirebaseMessaging"):
 		messaging = Engine.get_singleton("GodotxFirebaseMessaging")
 		messaging.messaging_permission_granted.connect(_on_permission_granted)
+		messaging.messaging_permission_denied.connect(_on_permission_denied)
 		messaging.messaging_token_received.connect(_on_token_received)
 		messaging.messaging_apn_token_received.connect(_on_apn_token_received)
 		messaging.messaging_message_received.connect(_on_message_received)
@@ -205,6 +206,11 @@ func _on_unsubscribe_topic_pressed() -> void:
 func _on_permission_granted() -> void:
 	log_message("[Messaging] ✓ Notification permission granted")
 	update_status("Permission Granted", Color.GREEN)
+
+func _on_permission_denied() -> void:
+	log_message("[Messaging] ⓘ Notification permission denied")
+	log_message("  User declined or disabled notifications in system settings")
+	update_status("Permission Denied", Color.ORANGE)
 
 func _on_token_received(token: String) -> void:
 	log_message("[Messaging] ✓ FCM Token received:")
