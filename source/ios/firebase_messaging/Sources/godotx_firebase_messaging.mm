@@ -40,6 +40,7 @@ void GodotxFirebaseMessaging::_bind_methods() {
     ClassDB::bind_method(D_METHOD("unsubscribe_from_topic", "topic"), &GodotxFirebaseMessaging::unsubscribe_from_topic);
 
     ADD_SIGNAL(MethodInfo("messaging_permission_granted"));
+    ADD_SIGNAL(MethodInfo("messaging_permission_denied"));
     ADD_SIGNAL(MethodInfo("messaging_token_received", PropertyInfo(Variant::STRING, "token")));
     ADD_SIGNAL(MethodInfo("messaging_apn_token_received", PropertyInfo(Variant::STRING, "token")));
     ADD_SIGNAL(MethodInfo("messaging_message_received", PropertyInfo(Variant::STRING, "title"), PropertyInfo(Variant::STRING, "body")));
@@ -81,7 +82,7 @@ void GodotxFirebaseMessaging::request_permission() {
             NSLog(@"[GodotxFirebaseMessaging] Notification permission is denied");
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (GodotxFirebaseMessaging::instance) {
-                    GodotxFirebaseMessaging::instance->emit_signal("messaging_error", String("Notification permission denied. Please enable notifications in iOS settings."));
+                    GodotxFirebaseMessaging::instance->emit_signal("messaging_permission_denied");
                 }
             });
             return;
@@ -133,7 +134,7 @@ void GodotxFirebaseMessaging::request_permission() {
             } else {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     if (GodotxFirebaseMessaging::instance) {
-                        GodotxFirebaseMessaging::instance->emit_signal("messaging_error", String("Notification permission not granted by the user."));
+                        GodotxFirebaseMessaging::instance->emit_signal("messaging_permission_denied");
                     }
                 });
             }

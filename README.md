@@ -40,10 +40,15 @@ This project provides native Firebase plugins for Godot, built as separate modul
 | Component | Version |
 |-----------|---------|
 | Godot | 4.5-stable |
-| Firebase iOS SDK | 12.6.0 |
-| Firebase Android SDK | 33.5.1 |
-| Kotlin | 2.1.0 |
+| **iOS** | |
+| Firebase iOS SDK | 12.7.0 |
 | Min iOS | 13.0 |
+| **Android** | |
+| firebase-analytics | 23.0.0 |
+| firebase-crashlytics | 20.0.3 |
+| firebase-messaging | 25.0.1 |
+| firebase-common | 22.0.1 |
+| Kotlin | 2.1.0 |
 | Min Android SDK | 24 (Android 7.0) |
 
 ## Quick Start
@@ -217,6 +222,7 @@ var messaging = Engine.get_singleton("GodotxFirebaseMessaging")
 
 # Connect to signals
 messaging.messaging_permission_granted.connect(_on_permission_granted)
+messaging.messaging_permission_denied.connect(_on_permission_denied)
 messaging.messaging_token_received.connect(_on_token_received)
 messaging.messaging_apn_token_received.connect(_on_apn_token_received)  # iOS only
 messaging.messaging_message_received.connect(_on_message_received)
@@ -234,6 +240,12 @@ if OS.get_name() == "iOS":
 
 func _on_permission_granted():
     print("Permission granted!")
+    # Safe to call get_token() here
+
+func _on_permission_denied():
+    print("Permission denied by user")
+    # User denied or disabled notifications in system settings
+    # You can prompt user to enable in settings or continue without notifications
 
 func _on_token_received(token: String):
     print("FCM Token: ", token)
@@ -257,13 +269,25 @@ func _on_error(message: String):
 - `unsubscribe_from_topic(topic: String)` - Unsubscribe from a topic
 
 **Available Signals:**
-- `messaging_permission_granted()` - Notification permission granted
+- `messaging_permission_granted()` - Notification permission granted by user
+- `messaging_permission_denied()` - Notification permission denied by user or in system settings
 - `messaging_token_received(token: String)` - FCM registration token received
 - `messaging_apn_token_received(token: String)` - iOS APN device token received (iOS only)
 - `messaging_message_received(title: String, body: String)` - Push notification received
-- `messaging_error(message: String)` - Error occurred
+- `messaging_error(message: String)` - Error occurred (network failures, API errors, etc)
 
-**Note:** On iOS, Firebase Messaging uses method swizzling to automatically handle APNs registration. The APNs token is captured by Firebase internally and can be accessed via the `get_apns_token()` method after calling `request_permission()`.
+**Important Notes:**
+
+- **Permission Checking Pattern:** It is safe and recommended to call `request_permission()` every time your app opens. The method performs an internal check and will:
+  - Return immediately with `messaging_permission_granted` if already authorized (no user prompt)
+  - Return `messaging_permission_denied` if previously denied (no user prompt)
+  - Show the system permission dialog only if the user hasn't been asked before
+
+- **Permission vs Errors:** The `messaging_permission_denied` signal is the normal response when users decline notifications or have them disabled in settings. This is **not an error** - it's just feedback about permission status. The `messaging_error` signal is reserved for actual failures like network issues or API problems.
+
+- **Token Retrieval:** Do not use `get_token()` to infer permission status. Always check permission first with `request_permission()` and wait for the appropriate signal (`messaging_permission_granted` or `messaging_permission_denied`).
+
+- **iOS APNs:** On iOS, Firebase Messaging uses method swizzling to automatically handle APNs registration. The APNs token is captured by Firebase internally and can be accessed via the `get_apns_token()` method after calling `request_permission()`.
 
 ## Advanced Configuration
 
