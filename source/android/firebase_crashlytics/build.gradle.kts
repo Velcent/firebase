@@ -32,5 +32,6 @@ dependencies {
     
     // Firebase Crashlytics
     implementation("com.google.firebase:firebase-crashlytics:20.0.3")
+    implementation("com.google.firebase:firebase-crashlytics-ndk:20.0.3")
 }
 

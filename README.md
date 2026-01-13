@@ -46,6 +46,7 @@ This project provides native Firebase plugins for Godot, built as separate modul
 | **Android** | |
 | firebase-analytics | 23.0.0 |
 | firebase-crashlytics | 20.0.3 |
+| firebase-crashlytics-ndk | 20.0.3 |
 | firebase-messaging | 25.0.1 |
 | firebase-common | 22.0.1 |
 | Kotlin | 2.1.0 |
@@ -83,11 +84,8 @@ This project provides native Firebase plugins for Godot, built as separate modul
 ### 2. Configure Export Preset
 
 **For Android:**
-1. Install Android Build Template:
-   - **Project → Install Android Build Template**
-
-2. Configure export preset:
-   - Enable **Use Gradle Build**
+1. Configure export preset:
+   - Enable **Use Gradle Build** (required)
    - **Firebase/Android Config File**: Select `google-services.json`
    - Enable **Firebase Core** (required)
    - Enable other modules you need (Analytics, Crashlytics, Messaging)
@@ -97,6 +95,36 @@ This project provides native Firebase plugins for Godot, built as separate modul
    - **Firebase/iOS Config File**: Select `GoogleService-Info.plist`
    - Enable **Firebase Core** (required)
    - Enable other modules you need
+
+### 3. Configure Android Gradle (Required only for Android)
+
+1. **Install Android Build Template:**
+   - **Project → Install Android Build Template**
+
+2. **Edit `android/build/build.gradle`:**
+
+   > **Important:** The `buildscript` block **must be at the very beginning** of the `build.gradle` file, before any other blocks like `plugins` or `android`.
+
+   ```gradle
+   // This MUST be at the beginning of the file
+   buildscript {
+       dependencies {
+           // Add if not present
+           classpath 'com.google.gms:google-services:4.4.2'
+
+           // Add this if using Crashlytics (required for crash reports)
+           classpath 'com.google.firebase:firebase-crashlytics-gradle:3.0.6'
+       }
+   }
+
+   // ... rest of the file (plugins, android, dependencies blocks) ...
+
+   // At the end of the file
+   apply plugin: 'com.google.gms.google-services'
+
+   // Add this if using Crashlytics
+   apply plugin: 'com.google.firebase.crashlytics'
+   ```
 
 ### Export Filters (Recommended)
 
@@ -112,7 +140,7 @@ This excludes:
 - `addons/godotx_firebase/` - Export plugin scripts (not needed at runtime)
 - `build/` - Build output directory
 
-### 3. Test the Integration
+### 4. Test the Integration
 
 Run the included test scene to verify everything works:
 ```
@@ -290,37 +318,6 @@ func _on_error(message: String):
 - **iOS APNs:** On iOS, Firebase Messaging uses method swizzling to automatically handle APNs registration. The APNs token is captured by Firebase internally and can be accessed via the `get_apns_token()` method after calling `request_permission()`.
 
 ## Advanced Configuration
-
-### Android Gradle Setup (Optional)
-
-The plugin automatically handles Firebase dependencies, but if you need to customize your Android build:
-
-1. Edit `android/build/build.gradle`:
-
-> **Important:** The `buildscript` block **must be at the very beginning** of the `build.gradle` file, before any other blocks like `plugins` or `android`.
-
-```gradle
-// This MUST be at the beginning of the file
-buildscript {
-    dependencies {
-        // Add if not present
-        classpath 'com.google.gms:google-services:4.4.2'
-
-        // Add this if using Crashlytics (required for crash reports)
-        classpath 'com.google.firebase:firebase-crashlytics-gradle:3.0.6'
-    }
-}
-
-// ... rest of the file (plugins, android, dependencies blocks) ...
-
-// At the end of the file
-apply plugin: 'com.google.gms.google-services'
-
-// Add this if using Crashlytics
-apply plugin: 'com.google.firebase.crashlytics'
-```
-
-2. Custom dependencies can be added to module-specific `build.gradle` files
 
 ### Android Notification Icon
 
