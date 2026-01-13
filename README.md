@@ -319,37 +319,6 @@ func _on_error(message: String):
 
 ## Advanced Configuration
 
-### Android Gradle Setup (Optional)
-
-The plugin automatically handles Firebase dependencies, but if you need to customize your Android build:
-
-1. Edit `android/build/build.gradle`:
-
-> **Important:** The `buildscript` block **must be at the very beginning** of the `build.gradle` file, before any other blocks like `plugins` or `android`.
-
-```gradle
-// This MUST be at the beginning of the file
-buildscript {
-    dependencies {
-        // Add if not present
-        classpath 'com.google.gms:google-services:4.4.2'
-
-        // Add this if using Crashlytics (required for crash reports)
-        classpath 'com.google.firebase:firebase-crashlytics-gradle:3.0.6'
-    }
-}
-
-// ... rest of the file (plugins, android, dependencies blocks) ...
-
-// At the end of the file
-apply plugin: 'com.google.gms.google-services'
-
-// Add this if using Crashlytics
-apply plugin: 'com.google.firebase.crashlytics'
-```
-
-2. Custom dependencies can be added to module-specific `build.gradle` files
-
 ### Android Notification Icon
 
 To customize the notification icon for Firebase Cloud Messaging, see:
