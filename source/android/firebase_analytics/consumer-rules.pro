@@ -18,6 +18,17 @@
 -dontwarn kotlin.**
 
 ####################################
+# Godot Plugin API
+####################################
+-keep class org.godotengine.godot.plugin.** { *; }
+-dontwarn org.godotengine.godot.plugin.**
+
+####################################
+# Keep Godot Annotations
+####################################
+-keepattributes *Annotation*
+
+####################################
 # Godot Firebase Plugin
 ####################################
 -keep class com.godotx.firebase.** { *; }
