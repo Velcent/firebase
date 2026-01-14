@@ -65,18 +65,39 @@ This project provides native Firebase plugins for Godot, built as separate modul
 
 #### Option B: Manual Installation
 
-1. **Copy the plugin** to your Godot project:
+1. **Download the ZIP** from [Releases](https://github.com/godot-x/firebase/releases)
+
+2. **Extract the ZIP** - it contains 3 folders:
    ```
-   your_project/
-   └── addons/
-       └── godotx_firebase/  # Copy this folder
+   godotx_firebase/
+   ├── addons/
+   ├── ios/
+   └── android/
    ```
 
-2. **Enable the plugin** in Godot:
+3. **Copy all 3 folders** to your Godot project root:
+   ```
+   your_project/
+   ├── addons/
+   │   └── godotx_firebase/
+   ├── ios/
+   │   └── plugins/
+   │       ├── firebase_core/
+   │       ├── firebase_analytics/
+   │       ├── firebase_crashlytics/
+   │       └── firebase_messaging/
+   └── android/
+       ├── firebase_core/
+       ├── firebase_analytics/
+       ├── firebase_crashlytics/
+       └── firebase_messaging/
+   ```
+
+4. **Enable the plugin** in Godot:
    - Open **Project → Project Settings → Plugins**
    - Enable "Godotx Firebase"
 
-3. **Add Firebase config files** to your project root:
+5. **Add Firebase config files** to your project root:
    - Download from [Firebase Console](https://console.firebase.google.com/)
    - iOS: `GoogleService-Info.plist`
    - Android: `google-services.json`
@@ -126,7 +147,7 @@ This project provides native Firebase plugins for Godot, built as separate modul
    apply plugin: 'com.google.firebase.crashlytics'
    ```
 
-### Export Filters (Recommended)
+### 4. Export Filters (Recommended)
 
 Some project files may be copied to the final APK/AAB/IPA assets folder unnecessarily. To reduce app size and avoid including development files, add these patterns to **Filters to exclude files/folders from project** in your export preset:
 
@@ -140,7 +161,7 @@ This excludes:
 - `addons/godotx_firebase/` - Export plugin scripts (not needed at runtime)
 - `build/` - Build output directory
 
-### 4. Test the Integration
+### 5. Test the Integration
 
 Run the included test scene to verify everything works:
 ```
