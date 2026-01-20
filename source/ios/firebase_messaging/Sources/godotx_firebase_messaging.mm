@@ -55,17 +55,26 @@ GodotxFirebaseMessaging::GodotxFirebaseMessaging() {
     ERR_FAIL_COND(instance != nullptr);
     instance = this;
 
+    [FIRMessaging messaging].autoInitEnabled = YES;
+    NSLog(@"[GodotxFirebaseMessaging] Auto init enabled");
+
     if (messagingDelegate == nil) {
         messagingDelegate = [[GodotxFirebaseMessagingDelegate alloc] init];
         [FIRMessaging messaging].delegate = messagingDelegate;
         NSLog(@"[GodotxFirebaseMessaging] Messaging delegate configured");
     }
 
+    [[GodotxAPNDelegate shared] registerAsNotificationCenterDelegate];
+
     NSLog(@"[GodotxFirebaseMessaging] Created");
 }
 
 GodotxFirebaseMessaging::~GodotxFirebaseMessaging() {
     if (instance == this) {
+        [FIRMessaging messaging].delegate = nil;
+        [UNUserNotificationCenter currentNotificationCenter].delegate = nil;
+        messagingDelegate = nil;
+        NSLog(@"[GodotxFirebaseMessaging] Delegates cleared");
         instance = nullptr;
     }
 }
@@ -204,10 +213,8 @@ void GodotxFirebaseMessaging::get_apns_token() {
         NSData *apnsToken = [FIRMessaging messaging].APNSToken;
 
         if (apnsToken) {
-            // Convert device token to hex string
             const unsigned char *data = (const unsigned char *)[apnsToken bytes];
             NSMutableString *token = [NSMutableString string];
-
             for (NSUInteger i = 0; i < [apnsToken length]; i++) {
                 [token appendFormat:@"%02.2hhX", data[i]];
             }
@@ -218,10 +225,10 @@ void GodotxFirebaseMessaging::get_apns_token() {
                 GodotxFirebaseMessaging::instance->emit_signal("messaging_apn_token_received", String([token UTF8String]));
             }
         } else {
-            NSLog(@"[GodotxFirebaseMessaging] APNs token not available yet");
+            NSLog(@"[GodotxFirebaseMessaging] APNs token not available yet. This may take a few seconds after registerForRemoteNotifications.");
 
             if (GodotxFirebaseMessaging::instance) {
-                GodotxFirebaseMessaging::instance->emit_signal("messaging_error", String("APNs token not available. Make sure you called request_permission() first."));
+                GodotxFirebaseMessaging::instance->emit_signal("messaging_error", String("APNs token not available yet. Make sure you called request_permission() and wait for the callback."));
             }
         }
     });
