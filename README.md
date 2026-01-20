@@ -216,6 +216,7 @@ func _on_core_initialized(success: bool):
             analytics.initialize()
         if messaging:
             messaging.initialize()
+            messaging.request_permission()
     else:
         print("Firebase Core initialization failed")
 
