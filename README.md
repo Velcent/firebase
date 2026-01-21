@@ -349,6 +349,17 @@ func _on_error(message: String):
 
 - **iOS APNs:** On iOS, Firebase Messaging uses method swizzling to automatically handle APNs registration. The APNs token is captured by Firebase internally and can be accessed via the `get_apns_token()` method after calling `request_permission()`.
 
+- **iOS Export Settings:** For push notifications to work correctly on iOS, you must add the following to your Godot export settings under **Export > iOS > Additional Plist Content**:
+
+  ```xml
+  <key>UIBackgroundModes</key>
+  <array>
+      <string>remote-notification</string>
+  </array>
+  ```
+
+  This enables background remote notifications capability for your app.
+
 ## Advanced Configuration
 
 ### Android R8/ProGuard Minification
