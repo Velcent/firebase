@@ -1,18 +1,5 @@
 #import "godotx_apn_delegate.h"
 #include "godotx_firebase_messaging.h"
-#import "drivers/apple_embedded/godot_app_delegate.h"
-
-@import Firebase;
-
-// Auto-register the delegate when the plugin loads
-struct APNDelegateInitializer {
-    APNDelegateInitializer() {
-        [GDTApplicationDelegate addService:[GodotxAPNDelegate shared]];
-        NSLog(@"[GodotxAPNDelegate] Registered with Godot application delegate");
-    }
-};
-
-static APNDelegateInitializer initializer;
 
 @implementation GodotxAPNDelegate
 
@@ -24,6 +11,11 @@ static APNDelegateInitializer initializer;
     return self;
 }
 
+- (void)activateNotificationCenterDelegate {
+    [UNUserNotificationCenter currentNotificationCenter].delegate = self;
+    NSLog(@"[GodotxAPNDelegate] UNUserNotificationCenter delegate activated");
+}
+
 + (instancetype)shared {
     static GodotxAPNDelegate *sharedInstance = nil;
     static dispatch_once_t onceToken;
@@ -33,39 +25,52 @@ static APNDelegateInitializer initializer;
     return sharedInstance;
 }
 
-- (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
-    NSLog(@"[GodotxAPNDelegate] Received APN device token");
+#pragma mark - UNUserNotificationCenterDelegate
 
-    // Set APNs token in Firebase Messaging (in case swizzling is disabled or as fallback)
-    [FIRMessaging messaging].APNSToken = deviceToken;
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center
+       willPresentNotification:(UNNotification *)notification
+         withCompletionHandler:(void (^)(UNNotificationPresentationOptions))completionHandler {
 
-    // Convert device token to hex string
-    const unsigned char *data = (const unsigned char *)[deviceToken bytes];
-    NSMutableString *token = [NSMutableString string];
+    NSDictionary *userInfo = notification.request.content.userInfo;
+    NSLog(@"[GodotxAPNDelegate] Received notification in foreground: %@", userInfo);
 
-    for (NSUInteger i = 0; i < [deviceToken length]; i++) {
-        [token appendFormat:@"%02.2hhX", data[i]];
-    }
+    NSString *title = notification.request.content.title ?: @"";
+    NSString *body = notification.request.content.body ?: @"";
 
-    NSLog(@"[GodotxAPNDelegate] APN Token: %@", token);
-
-    // Notify Godot about the APN token
     dispatch_async(dispatch_get_main_queue(), ^{
         if (GodotxFirebaseMessaging::instance) {
-            GodotxFirebaseMessaging::instance->emit_signal("messaging_apn_token_received", String([token UTF8String]));
+            GodotxFirebaseMessaging::instance->emit_signal("messaging_message_received",
+                String([title UTF8String]),
+                String([body UTF8String]));
         }
     });
+
+    if (@available(iOS 14.0, *)) {
+        completionHandler(UNNotificationPresentationOptionBanner | UNNotificationPresentationOptionSound | UNNotificationPresentationOptionBadge);
+    } else {
+        completionHandler(UNNotificationPresentationOptionAlert | UNNotificationPresentationOptionSound | UNNotificationPresentationOptionBadge);
+    }
 }
 
-- (void)application:(UIApplication *)application didFailToRegisterForRemoteNotificationsWithError:(NSError *)error {
-    NSLog(@"[GodotxAPNDelegate] Failed to register for remote notifications: %@", error.localizedDescription);
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center
+didReceiveNotificationResponse:(UNNotificationResponse *)response
+         withCompletionHandler:(void (^)(void))completionHandler {
+
+    NSDictionary *userInfo = response.notification.request.content.userInfo;
+    NSLog(@"[GodotxAPNDelegate] User tapped notification: %@", userInfo);
+
+    NSString *title = response.notification.request.content.title ?: @"";
+    NSString *body = response.notification.request.content.body ?: @"";
 
     dispatch_async(dispatch_get_main_queue(), ^{
         if (GodotxFirebaseMessaging::instance) {
-            String error_msg = String("Failed to register for APNs: ") + String([error.localizedDescription UTF8String]);
-            GodotxFirebaseMessaging::instance->emit_signal("messaging_error", error_msg);
+            GodotxFirebaseMessaging::instance->emit_signal("messaging_message_received",
+                String([title UTF8String]),
+                String([body UTF8String]));
         }
     });
+
+    completionHandler();
 }
 
 @end

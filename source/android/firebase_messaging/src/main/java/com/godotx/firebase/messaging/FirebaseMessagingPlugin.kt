@@ -61,6 +61,32 @@ class FirebaseMessagingPlugin(godot: Godot) : GodotPlugin(godot) {
     }
 
     @UsedByGodot
+    fun initialize() {
+        val ctx = activity
+
+        if (ctx == null) {
+            Log.e(TAG, "initialize: activity is null")
+            emitSignal("messaging_error", "activity_null")
+            return
+        }
+
+        try {
+            val apps = com.google.firebase.FirebaseApp.getApps(ctx)
+
+            if (apps.isEmpty()) {
+                Log.e(TAG, "Firebase is NOT initialized")
+                emitSignal("messaging_error", "firebase_not_initialized")
+                return
+            }
+
+            Log.d(TAG, "Firebase Messaging initialized (${apps.size} Firebase app(s) found)")
+        } catch (e: Exception) {
+            Log.e(TAG, "Firebase initialization check failed", e)
+            emitSignal("messaging_error", e.message ?: "firebase_check_failed")
+        }
+    }
+
+    @UsedByGodot
     fun request_permission() {
         val ctx = activity
         if (ctx == null) {

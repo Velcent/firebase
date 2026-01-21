@@ -33,6 +33,7 @@ GodotxFirebaseMessaging *GodotxFirebaseMessaging::instance = nullptr;
 static GodotxFirebaseMessagingDelegate *messagingDelegate = nil;
 
 void GodotxFirebaseMessaging::_bind_methods() {
+    ClassDB::bind_method(D_METHOD("initialize"), &GodotxFirebaseMessaging::initialize);
     ClassDB::bind_method(D_METHOD("request_permission"), &GodotxFirebaseMessaging::request_permission);
     ClassDB::bind_method(D_METHOD("get_token"), &GodotxFirebaseMessaging::get_token);
     ClassDB::bind_method(D_METHOD("get_apns_token"), &GodotxFirebaseMessaging::get_apns_token);
@@ -54,13 +55,6 @@ GodotxFirebaseMessaging *GodotxFirebaseMessaging::get_singleton() {
 GodotxFirebaseMessaging::GodotxFirebaseMessaging() {
     ERR_FAIL_COND(instance != nullptr);
     instance = this;
-
-    if (messagingDelegate == nil) {
-        messagingDelegate = [[GodotxFirebaseMessagingDelegate alloc] init];
-        [FIRMessaging messaging].delegate = messagingDelegate;
-        NSLog(@"[GodotxFirebaseMessaging] Messaging delegate configured");
-    }
-
     NSLog(@"[GodotxFirebaseMessaging] Created");
 }
 
@@ -68,6 +62,26 @@ GodotxFirebaseMessaging::~GodotxFirebaseMessaging() {
     if (instance == this) {
         instance = nullptr;
     }
+}
+
+void GodotxFirebaseMessaging::initialize() {
+    NSLog(@"[GodotxFirebaseMessaging] Initializing...");
+
+    if (![FIRApp defaultApp]) {
+        NSLog(@"[GodotxFirebaseMessaging] Firebase core not ready");
+        return;
+    }
+
+    if (messagingDelegate == nil) {
+        [FIRMessaging messaging].autoInitEnabled = YES;
+        messagingDelegate = [[GodotxFirebaseMessagingDelegate alloc] init];
+        [FIRMessaging messaging].delegate = messagingDelegate;
+        NSLog(@"[GodotxFirebaseMessaging] Messaging delegate configured");
+    }
+
+    [[GodotxAPNDelegate shared] activateNotificationCenterDelegate];
+
+    NSLog(@"[GodotxFirebaseMessaging] Initialized");
 }
 
 void GodotxFirebaseMessaging::request_permission() {
@@ -204,10 +218,8 @@ void GodotxFirebaseMessaging::get_apns_token() {
         NSData *apnsToken = [FIRMessaging messaging].APNSToken;
 
         if (apnsToken) {
-            // Convert device token to hex string
             const unsigned char *data = (const unsigned char *)[apnsToken bytes];
             NSMutableString *token = [NSMutableString string];
-
             for (NSUInteger i = 0; i < [apnsToken length]; i++) {
                 [token appendFormat:@"%02.2hhX", data[i]];
             }
@@ -218,10 +230,10 @@ void GodotxFirebaseMessaging::get_apns_token() {
                 GodotxFirebaseMessaging::instance->emit_signal("messaging_apn_token_received", String([token UTF8String]));
             }
         } else {
-            NSLog(@"[GodotxFirebaseMessaging] APNs token not available yet");
+            NSLog(@"[GodotxFirebaseMessaging] APNs token not available yet. This may take a few seconds after registerForRemoteNotifications.");
 
             if (GodotxFirebaseMessaging::instance) {
-                GodotxFirebaseMessaging::instance->emit_signal("messaging_error", String("APNs token not available. Make sure you called request_permission() first."));
+                GodotxFirebaseMessaging::instance->emit_signal("messaging_error", String("APNs token not available yet. Make sure you called request_permission() and wait for the callback."));
             }
         }
     });

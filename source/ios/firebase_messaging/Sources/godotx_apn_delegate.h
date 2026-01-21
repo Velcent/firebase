@@ -4,9 +4,10 @@
 #import <UIKit/UIKit.h>
 #import <UserNotifications/UserNotifications.h>
 
-@interface GodotxAPNDelegate : NSObject <UIApplicationDelegate>
+@interface GodotxAPNDelegate : NSObject <UNUserNotificationCenterDelegate>
 
 + (instancetype)shared;
+- (void)activateNotificationCenterDelegate;
 
 @end
 
