@@ -39,7 +39,7 @@ This project provides native Firebase plugins for Godot, built as separate modul
 
 | Component | Version |
 |-----------|---------|
-| Godot | 4.5-stable |
+| Godot | 4.6-stable |
 | **iOS** | |
 | Firebase iOS SDK | 12.7.0 |
 | Min iOS | 13.0 |
@@ -665,7 +665,7 @@ A: Yes, Firebase adds approximately:
 Only enabled modules are included in the final build.
 
 **Q: Does this work with Godot 4.4 or earlier?**
-A: This project is built for Godot 4.5 or later.
+A: This project is built for Godot 4.6 or later.
 
 **Q: How do I get Firebase config files?**
 A:
