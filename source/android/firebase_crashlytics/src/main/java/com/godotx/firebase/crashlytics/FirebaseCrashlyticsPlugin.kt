@@ -89,5 +89,39 @@ class FirebaseCrashlyticsPlugin(godot: Godot) : GodotPlugin(godot) {
             emitSignal("crashlytics_error", e.message ?: "set_user_error")
         }
     }
+
+    @UsedByGodot
+    fun set_custom_value(key: String, value: Any?) {
+        val crashlyticsInstance = crashlytics
+        if (crashlyticsInstance == null) {
+            Log.e(TAG, "Firebase Crashlytics not initialized")
+            emitSignal("crashlytics_error", "crashlytics_not_initialized")
+            return
+        }
+
+        try {
+            when (value) {
+                is String -> crashlyticsInstance.setCustomKey(key, value)
+                is Boolean -> crashlyticsInstance.setCustomKey(key, value)
+                is Int -> crashlyticsInstance.setCustomKey(key, value.toLong())
+                is Long -> crashlyticsInstance.setCustomKey(key, value)
+                is Float -> crashlyticsInstance.setCustomKey(key, value.toDouble())
+                is Double -> crashlyticsInstance.setCustomKey(key, value)
+                is Number -> {
+                    val n = value
+                    if (n.toLong().toDouble() == n.toDouble()) {
+                        crashlyticsInstance.setCustomKey(key, n.toLong())
+                    } else {
+                        crashlyticsInstance.setCustomKey(key, n.toDouble())
+                    }
+                }
+                else -> crashlyticsInstance.setCustomKey(key, value?.toString() ?: "")
+            }
+            Log.d(TAG, "Set custom value: $key = $value")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to set custom value", e)
+            emitSignal("crashlytics_error", e.message ?: "set_custom_value_error")
+        }
+    }
 }
 
