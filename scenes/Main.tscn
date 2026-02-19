@@ -106,6 +106,12 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 26
 text = "Set User ID"
 
+[node name="SetCustomValueButton" type="Button" parent="VBoxContainer/ScrollContainer/ContentContainer"]
+custom_minimum_size = Vector2(0, 70)
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "Set Custom Value"
+
 [node name="ForceCrashButton" type="Button" parent="VBoxContainer/ScrollContainer/ContentContainer"]
 custom_minimum_size = Vector2(0, 70)
 layout_mode = 2
@@ -172,6 +178,7 @@ text = "Clear Log"
 [connection signal="pressed" from="VBoxContainer/ScrollContainer/ContentContainer/LogScreenButton" to="." method="_on_log_screen_pressed"]
 [connection signal="pressed" from="VBoxContainer/ScrollContainer/ContentContainer/LogCrashlyticsButton" to="." method="_on_log_crashlytics_pressed"]
 [connection signal="pressed" from="VBoxContainer/ScrollContainer/ContentContainer/SetUserIDButton" to="." method="_on_set_user_id_pressed"]
+[connection signal="pressed" from="VBoxContainer/ScrollContainer/ContentContainer/SetCustomValueButton" to="." method="_on_set_custom_value_pressed"]
 [connection signal="pressed" from="VBoxContainer/ScrollContainer/ContentContainer/ForceCrashButton" to="." method="_on_force_crash_pressed"]
 [connection signal="pressed" from="VBoxContainer/ScrollContainer/ContentContainer/RequestPermissionButton" to="." method="_on_request_permission_pressed"]
 [connection signal="pressed" from="VBoxContainer/ScrollContainer/ContentContainer/GetTokenButton" to="." method="_on_get_token_pressed"]

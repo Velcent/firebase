@@ -268,6 +268,10 @@ func _on_crashlytics_initialized(success: bool):
     if success:
         # Now you can use Crashlytics
         crashlytics.set_user_id("user_123")
+        crashlytics.set_custom_value("current_level", "5")   # string
+        crashlytics.set_custom_value("score", 1000)          # int
+        crashlytics.set_custom_value("premium", true)        # bool
+        crashlytics.set_custom_value("progress", 0.85)       # float
         crashlytics.log_message("Player entered level 5")
 ```
 
