@@ -110,12 +110,14 @@ This project provides native Firebase plugins for Godot, built as separate modul
    - **Firebase/Android Config File**: Select `google-services.json`
    - Enable **Firebase Core** (required)
    - Enable other modules you need (Analytics, Crashlytics, Messaging)
+   - **Firebase/Privacy-safe defaults**: keep enabled to start with collection off and consent denied (see [GDPR / Consent Mode](#gdpr--consent-mode))
 
 **For iOS:**
 1. Configure export preset:
    - **Firebase/iOS Config File**: Select `GoogleService-Info.plist`
    - Enable **Firebase Core** (required)
    - Enable other modules you need
+   - **Firebase/Privacy-safe defaults**: keep enabled to start with collection off and consent denied (see [GDPR / Consent Mode](#gdpr--consent-mode))
 
 ### 3. Configure Android Gradle (Required only for Android)
 
@@ -251,23 +253,14 @@ func _on_analytics_initialized(success: bool):
 
 #### GDPR / Consent Mode
 
-Firebase emits automatic events (e.g. `first_open`, `session_start`) at app startup, before GDScript runs. To prevent pre-consent data collection, disable collection in your exported app's manifest/plist, then re-enable at runtime after the user consents:
+Firebase emits automatic events (e.g. `first_open`, `session_start`) at app startup, before GDScript runs. To stay compliant, nothing should be collected until the user consents.
 
-**Android** (`AndroidManifest.xml`, inside `<application>`):
+The export plugin handles this for you. The **Privacy-safe defaults** option (enabled by default) injects the official keys into the exported `AndroidManifest.xml` and iOS `Info.plist` so that, before any code runs:
 
-```xml
-<meta-data android:name="firebase_analytics_collection_enabled" android:value="false" />
-<meta-data android:name="firebase_crashlytics_collection_enabled" android:value="false" />
-```
+- Analytics and Crashlytics collection start disabled.
+- Every Consent Mode v2 signal (`analytics_storage`, `ad_storage`, `ad_user_data`, `ad_personalization`) defaults to denied.
 
-**iOS** (`Info.plist`):
-
-```xml
-<key>FIREBASE_ANALYTICS_COLLECTION_ENABLED</key><false/>
-<key>FirebaseCrashlyticsCollectionEnabled</key><false/>
-```
-
-After collecting consent (via UMP, a CMP, or your own UI):
+You then enable collection at runtime once the user consents. The runtime value persists across launches and takes precedence over the exported defaults.
 
 ```gdscript
 func _on_user_consented(granted: bool) -> void:
@@ -282,12 +275,11 @@ func _on_user_consented(granted: bool) -> void:
         "ad_user_data": state,
         "ad_personalization": state,
     })
-    if granted:
-        fb.set_analytics_collection_enabled(true)
-        crash.set_crashlytics_collection_enabled(true)
+    fb.set_analytics_collection_enabled(granted)
+    crash.set_crashlytics_collection_enabled(granted)
 ```
 
-On denial, call `set_consent` only — collection stays off. On revocation, call `set_analytics_collection_enabled(false)` and `set_crashlytics_collection_enabled(false)`.
+Call this on grant, on denial, and again whenever the user revokes consent — collection follows the `granted` flag every time. Disable **Privacy-safe defaults** in the export options only if your app has no consent requirement and should collect from first launch.
 
 ### Firebase Crashlytics
 

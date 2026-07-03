@@ -54,6 +54,15 @@ class AppleExportPlugin extends EditorExportPlugin:
 			"default_value": "res://GoogleService-Info.plist"
 		})
 
+		# Privacy-safe defaults (collection off + consent denied until the user opts in)
+		options.append({
+			"option": {
+				"name": "firebase/privacy_safe_defaults",
+				"type": TYPE_BOOL
+			},
+			"default_value": true
+		})
+
 		return options
 
 
@@ -66,6 +75,28 @@ class AppleExportPlugin extends EditorExportPlugin:
 		if ios_file != "" and FileAccess.file_exists(ios_file):
 			print("[Firebase] Adding iOS config: " + ios_file)
 			add_apple_embedded_platform_bundle_file(ios_file)
+
+		if get_option("firebase/privacy_safe_defaults"):
+			_apply_privacy_safe_defaults()
+
+
+	func _apply_privacy_safe_defaults() -> void:
+		# hold analytics and crash reporting, and default every consent signal to denied until the user opts in
+		var keys: PackedStringArray = [
+			"FIREBASE_ANALYTICS_COLLECTION_ENABLED",
+			"FirebaseCrashlyticsCollectionEnabled",
+			"GOOGLE_ANALYTICS_DEFAULT_ALLOW_ANALYTICS_STORAGE",
+			"GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_STORAGE",
+			"GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_USER_DATA",
+			"GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_PERSONALIZATION_SIGNALS"
+		]
+
+		var contents := ""
+		for key in keys:
+			contents += "<key>%s</key>\n<false/>\n" % key
+
+		add_apple_embedded_platform_plist_content(contents)
+		print("[Firebase] Applied privacy-safe defaults to iOS Info.plist")
 
 
 # ============================================================================
@@ -169,13 +200,13 @@ class AndroidExportPlugin extends EditorExportPlugin:
 			"default_value": "25.1.0"
 		})
 
-		# Enable Consent Mode v2
+		# Privacy-safe defaults (collection off + consent denied until the user opts in)
 		options.append({
 			"option": {
-			"name": "firebase/denied_default_consent",
-			"type": TYPE_BOOL
+				"name": "firebase/privacy_safe_defaults",
+				"type": TYPE_BOOL
 			},
-			"default_value": false
+			"default_value": true
 		})
 
 		return options
@@ -290,28 +321,29 @@ class AndroidExportPlugin extends EditorExportPlugin:
 		print("[Firebase] Copied Android config to " + dest_res_path)
 
 	func _get_android_manifest_application_element_contents(platform: EditorExportPlatform, debug: bool) -> String:
-		if not _supports_platform(platform) or not get_option("firebase/denied_default_consent"):
+		if not _supports_platform(platform) or not get_option("firebase/privacy_safe_defaults"):
 			return ""
 
-		var consent_meta = """
-		<!-- Google Consent Mode v2 - Default values (zero pre-consent leak protection) -->
-		<!-- Official keys from Google: https://developers.google.com/tag-platform/security/guides/app-consent -->
-		<meta-data
-			android:name="google_analytics_default_allow_analytics_storage"
-			android:value="false" />
+		var keys: PackedStringArray = []
 
-		<meta-data
-			android:name="google_analytics_default_allow_ad_storage"
-			android:value="false" />
+		# hold analytics collection and default every consent signal to denied until the user opts in
+		if get_option("firebase/enable_analytics"):
+			keys.append("firebase_analytics_collection_enabled")
+			keys.append("google_analytics_default_allow_analytics_storage")
+			keys.append("google_analytics_default_allow_ad_storage")
+			keys.append("google_analytics_default_allow_ad_user_data")
+			keys.append("google_analytics_default_allow_ad_personalization_signals")
 
-		<meta-data
-			android:name="google_analytics_default_allow_ad_user_data"
-			android:value="false" />
+		# hold crash reporting until the user opts in
+		if get_option("firebase/enable_crashlytics"):
+			keys.append("firebase_crashlytics_collection_enabled")
 
-		<meta-data
-			android:name="google_analytics_default_allow_ad_personalization_signals"
-			android:value="false" />
+		if keys.is_empty():
+			return ""
 
-		"""
-		print("[Firebase] Added Consent Mode v2 default values (all denied)")
-		return consent_meta
+		var contents := ""
+		for key in keys:
+			contents += '<meta-data android:name="%s" android:value="false" />\n' % key
+
+		print("[Firebase] Applied privacy-safe defaults to Android manifest")
+		return contents
