@@ -81,7 +81,7 @@ class AppleExportPlugin extends EditorExportPlugin:
 
 
 	func _apply_privacy_safe_defaults() -> void:
-		# hold analytics and crash reporting, and default every consent signal to denied until the user opts in
+		# Hold analytics and crash reporting, and default every consent signal to denied until the user opts in
 		var keys: PackedStringArray = [
 			"FIREBASE_ANALYTICS_COLLECTION_ENABLED",
 			"FirebaseCrashlyticsCollectionEnabled",
@@ -326,7 +326,7 @@ class AndroidExportPlugin extends EditorExportPlugin:
 
 		var keys: PackedStringArray = []
 
-		# hold analytics collection and default every consent signal to denied until the user opts in
+		# Hold analytics collection and default every consent signal to denied until the user opts in
 		if get_option("firebase/enable_analytics"):
 			keys.append("firebase_analytics_collection_enabled")
 			keys.append("google_analytics_default_allow_analytics_storage")
@@ -334,7 +334,7 @@ class AndroidExportPlugin extends EditorExportPlugin:
 			keys.append("google_analytics_default_allow_ad_user_data")
 			keys.append("google_analytics_default_allow_ad_personalization_signals")
 
-		# hold crash reporting until the user opts in
+		# Hold crash reporting until the user opts in
 		if get_option("firebase/enable_crashlytics"):
 			keys.append("firebase_crashlytics_collection_enabled")
 
