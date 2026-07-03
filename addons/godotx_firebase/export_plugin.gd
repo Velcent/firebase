@@ -68,8 +68,6 @@ class AppleExportPlugin extends EditorExportPlugin:
 			add_apple_embedded_platform_bundle_file(ios_file)
 
 
-
-
 # ============================================================================
 # Android Export Plugin
 # ============================================================================
@@ -169,6 +167,15 @@ class AndroidExportPlugin extends EditorExportPlugin:
 				"type": TYPE_STRING
 			},
 			"default_value": "25.1.0"
+		})
+
+		# Enable Consent Mode v2
+		options.append({
+			"option": {
+			"name": "firebase/denied_default_consent",
+			"type": TYPE_BOOL
+			},
+			"default_value": false
 		})
 
 		return options
@@ -282,3 +289,29 @@ class AndroidExportPlugin extends EditorExportPlugin:
 
 		print("[Firebase] Copied Android config to " + dest_res_path)
 
+	func _get_android_manifest_application_element_contents(platform: EditorExportPlatform, debug: bool) -> String:
+		if not _supports_platform(platform) or not get_option("firebase/denied_default_consent"):
+			return ""
+
+		var consent_meta = """
+		<!-- Google Consent Mode v2 - Default values (zero pre-consent leak protection) -->
+		<!-- Official keys from Google: https://developers.google.com/tag-platform/security/guides/app-consent -->
+		<meta-data
+			android:name="google_analytics_default_allow_analytics_storage"
+			android:value="false" />
+
+		<meta-data
+			android:name="google_analytics_default_allow_ad_storage"
+			android:value="false" />
+
+		<meta-data
+			android:name="google_analytics_default_allow_ad_user_data"
+			android:value="false" />
+
+		<meta-data
+			android:name="google_analytics_default_allow_ad_personalization_signals"
+			android:value="false" />
+
+		"""
+		print("[Firebase] Added Consent Mode v2 default values (all denied)")
+		return consent_meta
