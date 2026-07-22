@@ -41,13 +41,13 @@ This project provides native Firebase plugins for Godot, built as separate modul
 |-----------|---------|
 | Godot | 4.7-stable |
 | **iOS** | |
-| Firebase iOS SDK | 12.15.0 |
+| Firebase iOS SDK | 12.16.0 |
 | Min iOS | 13.0 |
 | **Android** | |
 | firebase-analytics | 23.2.0 |
-| firebase-crashlytics | 20.0.6 |
-| firebase-crashlytics-ndk | 20.0.6 |
-| firebase-messaging | 25.1.0 |
+| firebase-crashlytics | 20.1.0 |
+| firebase-crashlytics-ndk | 20.1.0 |
+| firebase-messaging | 25.1.1 |
 | firebase-common | 22.1.0 |
 | Kotlin | 2.4.0 |
 | Min Android SDK | 24 (Android 7.0) |

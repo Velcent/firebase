@@ -34,6 +34,6 @@ dependencies {
     compileOnly("org.godotengine:godot:4.7.0.stable")
 
     // Firebase Messaging
-    implementation("com.google.firebase:firebase-messaging:25.1.0")
+    implementation("com.google.firebase:firebase-messaging:25.1.1")
 }
 

@@ -41,7 +41,7 @@ APPLE_SDK_ARCHS = iphoneos/arm64 iphonesimulator/arm64 iphonesimulator/x86_64
 # ============================================================================
 GODOT_VERSION = 4.7-stable
 GODOT_REPO = https://github.com/godotengine/godot.git
-FIREBASE_VERSION = 12.15.0
+FIREBASE_VERSION = 12.16.0
 
 # ============================================================================
 # Help
@@ -322,9 +322,11 @@ package:
 	@echo "→ Copying Android plugins..."
 	@mkdir -p godotx_firebase/android
 	@cp -a android/firebase_* godotx_firebase/android/
+	@echo "→ Copying license and readme..."
+	@cp -a LICENSE godotx_firebase/
+	@cp -a README.md godotx_firebase/
 	@echo "→ Creating zip archive..."
 	@zip -ry godotx_firebase.zip godotx_firebase
-	@rm -rf godotx_firebase
 	@echo ""
 	@echo "====================================================================="
 	@echo "✓ Package created: godotx_firebase.zip"

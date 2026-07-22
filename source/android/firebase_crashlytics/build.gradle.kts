@@ -34,7 +34,7 @@ dependencies {
     compileOnly("org.godotengine:godot:4.7.0.stable")
 
     // Firebase Crashlytics
-    implementation("com.google.firebase:firebase-crashlytics:20.0.6")
-    implementation("com.google.firebase:firebase-crashlytics-ndk:20.0.6")
+    implementation("com.google.firebase:firebase-crashlytics:20.1.0")
+    implementation("com.google.firebase:firebase-crashlytics-ndk:20.1.0")
 }
 
