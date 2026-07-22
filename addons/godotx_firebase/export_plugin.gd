@@ -179,7 +179,7 @@ class AndroidExportPlugin extends EditorExportPlugin:
 				"name": "firebase/crashlytics_version",
 				"type": TYPE_STRING
 			},
-			"default_value": "20.0.6"
+			"default_value": "20.1.0"
 		})
 
 		# Enable Messaging
@@ -197,7 +197,7 @@ class AndroidExportPlugin extends EditorExportPlugin:
 				"name": "firebase/messaging_version",
 				"type": TYPE_STRING
 			},
-			"default_value": "25.1.0"
+			"default_value": "25.1.1"
 		})
 
 		# Privacy-safe defaults (collection off + consent denied until the user opts in)
