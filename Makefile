@@ -323,8 +323,8 @@ package:
 	@mkdir -p godotx_firebase/android
 	@cp -a android/firebase_* godotx_firebase/android/
 	@echo "→ Copying license and readme..."
-	@cp -a LICENSE godotx_firebase/
-	@cp -a README.md godotx_firebase/
+	@cp -a LICENSE godotx_firebase/addons/godotx_firebase/
+	@cp -a README.md godotx_firebase/addons/godotx_firebase/
 	@echo "→ Creating zip archive..."
 	@zip -ry godotx_firebase.zip godotx_firebase
 	@echo ""
